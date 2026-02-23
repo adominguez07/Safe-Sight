@@ -30,3 +30,13 @@ class Camera():
       self.cap.release()
       self.cap = None
     cv2.destroyAllWindows()
+
+def camera_feed():
+  camera = Camera()
+  camera.start()
+  while True:
+    frame = camera.read_frame()
+    cv2.imshow("Safe-Sight", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+      break
+  camera.release()
