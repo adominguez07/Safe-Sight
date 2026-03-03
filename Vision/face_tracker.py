@@ -1,61 +1,40 @@
 import cv2
 import mediapipe as mp
+import numpy as np
+from pathlib import Path
+from camera import camera_feed
+from camera import Camera
+from visualize import visualize
 
 
-class FaceTracker:
-    def __init__(self, min_detection_confidence: float = 0.5, model_selection: int = 0) -> None:
-        self._detector = mp.solutions.face_detection.FaceDetection(
-            model_selection=model_selection,
-            min_detection_confidence=min_detection_confidence,
-        )
-
-    def detect_and_draw(self, frame):
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = self._detector.process(rgb_frame)
-
-        if not results.detections:
-            return frame
-
-        height, width, _ = frame.shape
-        for detection in results.detections:
-            bbox = detection.location_data.relative_bounding_box
-
-            x1 = max(int(bbox.xmin * width), 0)
-            y1 = max(int(bbox.ymin * height), 0)
-            x2 = min(int((bbox.xmin + bbox.width) * width), width)
-            y2 = min(int((bbox.ymin + bbox.height) * height), height)
-
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
-        return frame
-
-    def close(self) -> None:
-        self._detector.close()
+BASE_DIR = Path(__file__).resolve().parent #path C:/Projects/Safe-Sight
+MODEL_FILE = BASE_DIR / 'models' / 'blaze_face_short_range.tflite'
+CAMERA = Camera()
 
 
-def main(camera_index: int = 0) -> None:
-    cap = cv2.VideoCapture(camera_index)
-    if not cap.isOpened():
-        raise RuntimeError(f"Could not open camera index {camera_index}.")
+def stream_test():
+    CAMERA.start()      #This starts the camera and prepares for a camera feed
+    
+    base_op = mp.tasks.BaseOptions(model_asset_path = str(MODEL_FILE))
+    face_options = mp.tasks.vision.FaceDetectorOptions(base_options = base_op)
+    detector = mp.tasks.vision.FaceDetector.create_from_options(face_options)
 
-    tracker = FaceTracker()
+    while True:
+        frame = CAMERA.read_frame()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  #coverts frame from BGR to RGB
+        
+        mp_frame = mp.Image(image_format = mp.ImageFormat.SRGB, data = frame)   #Converts the frame into something mp can work witjh
+        
+        results = detector.detect(mp_frame)
+        annotated_stream = visualize(frame ,results)
 
-    try:
-        while True:
-            success, frame = cap.read()
-            if not success:
-                break
-
-            frame = tracker.detect_and_draw(frame)
-            cv2.imshow("Safe-Sight", frame)
-
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
-    finally:
-        tracker.close()
-        cap.release()
-        cv2.destroyAllWindows()
-
+        cv2.imshow("Safe_Sight", annotated_stream)
+        if cv2.waitKey(1) & 0xFF == 'q':
+            break
+    
+    #close camera
+    CAMERA.release()
+    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    main()
+    stream_test()

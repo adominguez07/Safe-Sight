@@ -21,7 +21,7 @@ class Camera():
     suc, frame = self.cap.read()
 
     if suc is None:
-      raise RuntimeError("Camera failed to grab from")
+      raise RuntimeError("Camera failed to grab frame")
 
     return frame
   
