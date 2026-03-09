@@ -14,7 +14,6 @@ TEXT_COLOR = (255, 0, 0)  # red
 def main():
   BASE_DIR = Path(__file__).resolve().parent.parent  #makes BASE_DIR == C:/Projects/Safe-Sight/Vision
   IMAGE_FILE = BASE_DIR /'Vision' / 'img' / 'image.jpg'
-  VIDEO_FILE = BASE_DIR / 'Vision' / 'img' / 'video.mp4'
   MODEL_FILE = BASE_DIR /'models' / 'blaze_face_short_range.tflite'
 
   img = cv2.imread(str(IMAGE_FILE))

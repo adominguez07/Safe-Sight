@@ -7,6 +7,7 @@ from visualize import visualize
 
 BASE_DIR = Path(__file__).resolve().parent.parent #path C:/Projects/Safe-Sight
 MODEL_FILE = BASE_DIR / 'models' / 'blaze_face_short_range.tflite'
+TASK_MODEL_FILE = BASE_DIR / 'models' / 'face_landmarker.task'
 VIDEO_FILE = BASE_DIR / 'Vision' / 'img' / 'video.mp4'
 CAMERA = Camera()
 
@@ -14,12 +15,15 @@ def landmark_test():
     CAMERA.start()
     running_mode = mp.tasks.vision.RunningMode.IMAGE
     base_options = mp.tasks.BaseOptions(model_asset_path = str(MODEL_FILE))
-    landmark_options = mp.tasks.vision.FaceLandmarkerOptions(
+    landmark_options = mp.tasks.vision.FaceDetectorOptions(
         base_options = base_options,
         running_mode = running_mode #Sets running mode to a Image as I am taking frames of the live_stream
     )
     landmark_detector = mp.tasks.vision.FaceLandmarker(
-        base_options = landmark_options,
+        # lib = landmark_options,
+        # handle = b,
+        # dispatcher = c,
+        # asyc_callback = d
     )
     landmark_model_path = mp.tasks.vision.FaceLandmarker.create_from_model_path(model_path = str(MODEL_FILE))
     while True:

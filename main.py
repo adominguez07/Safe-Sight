@@ -4,10 +4,11 @@ import numpy as np
 from pathlib import Path
 from Vision.camera import Camera
 from Vision.visualize import visualize
-
+import time
 
 BASE_DIR = Path(__file__).resolve().parent #path C:/Projects/Safe-Sight
-MODEL_FILE = BASE_DIR / 'models' / 'blaze_face_short_range.tflite'
+MODEL_FILE = BASE_DIR / 'models' / 'blaze_face_short_range.tflite' 
+TASK_MODEL_FILE = BASE_DIR / 'models' / 'face_landmarker.task'
 VIDEO_FILE = BASE_DIR / 'Vision' / 'img' / 'video.mp4'
 CAMERA = Camera()
 
@@ -35,7 +36,7 @@ def main():
   vid.release()
   cv2.destroyAllWindows()
 
-def stream_test():
+def stream_test_with_frames():
   CAMERA.start()      #This starts the camera and prepares for a camera feed
   
   base_op = mp.tasks.BaseOptions(model_asset_path = str(MODEL_FILE))
@@ -60,10 +61,48 @@ def stream_test():
   CAMERA.release()
   cv2.destroyAllWindows()
 
+def stream_test_with_video():
+  
+  #Setup for options
+
+  Base_Options= mp.tasks.BaseOptions
+  FaceLandmarker= mp.tasks.vision.FaceLandmarker
+  FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
+  VisionRunningMode = mp.tasks.vision.RunningMode
+
+  options = FaceLandmarkerOptions(
+    base_options = Base_Options(model_asset_path = str(TASK_MODEL_FILE)),
+    running_mode = VisionRunningMode.VIDEO
+  )
+
+  #Initialize the detector
+  with FaceLandmarker.create_from_options(options) as landmarker:
+    CAMERA.start()
+    while True:
+      frame = CAMERA.read_frame() 
+
+      rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) #converts OpenCV BGR to RGB
+      mp_frame = mp.Image(image_format = mp.ImageFormat.SRGB, data = rgb_frame)   #creates the mp frame using a RGB format and recieves data from rgb_frame
+
+      frame_timestamp_ms = int(time.time() * 1000) #Timestamp for the video detection in ms
+
+      detection_result = landmarker.detect_for_video( #detection for video with args from github repo
+        image = mp_frame,
+        timestamp_ms =  frame_timestamp_ms
+      )
+
+      if detection_result.face_landmarks:
+        pass
+
+      cv2.imshow("Safe-Sight", frame)
+      if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+    CAMERA.release()
+
 
 if __name__ == "__main__":
-  stream_test()
-
+  # stream_test_with_frames()
+  stream_test_with_video()
 
 #if __name__ == '__main__':
  # main()
