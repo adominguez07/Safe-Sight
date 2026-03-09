@@ -87,3 +87,4 @@ events.out.tfevents.*
 *.pb
 *.h5
 *.weights
+*.task
